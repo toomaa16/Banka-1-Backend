@@ -60,9 +60,10 @@ public class ObservabilityProperties {
     }
 
     /**
-     * Vraca da li je upis user ID vrednosti u MDC ukljucen.
+     * Definise da li ce user ID vrednost biti upisivana u MDC.
      *
-     * @return {@code true} ako je user ID MDC logika ukljucena, inace {@code false}
+     * @param userIdMdcEnabled {@code true} ako user ID treba upisivati u MDC,
+     *                         inace {@code false}
      */
     public void setUserIdMdcEnabled(boolean userIdMdcEnabled) {
         this.userIdMdcEnabled = userIdMdcEnabled;
