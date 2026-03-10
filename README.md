@@ -59,6 +59,12 @@ Validates all OpenAPI spec files found in service directories at these paths:
 
 Requires `redocly` to be installed (see Prerequisites). Empty spec files are skipped with a warning.
 
+To skip OpenAPI validation for a service that doesn't expose an HTTP API (e.g. a shared library), add a `.skip-openapi` marker file to its directory:
+
+```bash
+touch <service>/.skip-openapi
+```
+
 ### 3. Docker Build Validation
 
 Runs `docker compose build --no-cache` from the repo root.

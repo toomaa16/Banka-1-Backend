@@ -34,6 +34,8 @@ validate_openapi_for_service() {
   SERVICE_DIR="$1"
   SERVICE_NAME=$(basename "$SERVICE_DIR")
 
+  [ -f "$SERVICE_DIR/.skip-openapi" ] && { echo "  -> Skipping: $SERVICE_NAME (.skip-openapi)"; return 0; }
+
   for SPEC in \
     "$SERVICE_DIR/docs/openapi.yml" \
     "$SERVICE_DIR/docs/openapi.yaml" \
