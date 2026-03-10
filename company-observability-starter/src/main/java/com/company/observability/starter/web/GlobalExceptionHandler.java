@@ -11,13 +11,33 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Globalni exception handler za neocekivane greske u aplikaciji.
+ * <p>
+ * Handler loguje neobradjeni izuzetak zajedno sa osnovnim podacima o HTTP zahtevu
+ * i vraca standardizovan JSON odgovor sa informacijama o gresci i correlation ID vrednoscu.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * Kreira globalni exception handler.
+     *
+     * @param exceptionLoggingService servis za logovanje neobradjenih izuzetaka
+     */
     private final ExceptionLoggingService exceptionLoggingService;
     public GlobalExceptionHandler(ExceptionLoggingService exceptionLoggingService) {
         this.exceptionLoggingService = exceptionLoggingService;
     }
 
+
+    /**
+     * Obradjuje sve neocekivane izuzetke koji nisu posebno presretnuti drugim handler-ima.
+     *
+     * @param e izuzetak koji je nastao tokom obrade zahteva
+     * @param request HTTP zahtev u kome je greska nastala
+     * @return standardizovan odgovor sa podacima o internoj serverskoj gresci
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleException(Exception e, HttpServletRequest request) {
         exceptionLoggingService.logUnhandledException(e, request);

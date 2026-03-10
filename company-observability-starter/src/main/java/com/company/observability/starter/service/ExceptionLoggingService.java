@@ -4,13 +4,31 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// servis za logovanje neobradjenih gresaka
+/**
+ * Servis za logovanje neobradjenih izuzetaka nastalih tokom obrade HTTP zahteva.
+ * <p>
+ * Pre logovanja vrsi maskiranje osetljivih podataka iz query string-a
+ * i Authorization zaglavlja.
+ */
 public class ExceptionLoggingService {
     private static final Logger log = LoggerFactory.getLogger(ExceptionLoggingService.class);
     private final SensitiveDataMaskingService maskingService;
+
+    /**
+     * Kreira servis za logovanje neobradjenih izuzetaka.
+     *
+     * @param maskingService servis za maskiranje osetljivih podataka pre logovanja
+     */
     public ExceptionLoggingService(SensitiveDataMaskingService maskingService) {
         this.maskingService = maskingService;
     }
+
+    /**
+     * Loguje neobradjeni izuzetak zajedno sa osnovnim informacijama o HTTP zahtevu.
+     *
+     * @param exception izuzetak koji je nastao
+     * @param request HTTP zahtev u kome je izuzetak nastao
+     */
     public void logUnhandledException(Exception exception, HttpServletRequest request) {
         String maskedQuery = maskingService.maskQuery(request.getQueryString());
         String maskedAuthorization = maskingService.maskAuthorizationHeader(

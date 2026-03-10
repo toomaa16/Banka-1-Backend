@@ -15,8 +15,8 @@ public class ObservabilityEnvPostProcessor implements EnvironmentPostProcessor, 
     private static final String DEFAULT_LOGGING_CONFIG = "classpath:company-observability-starter/logback-spring.xml";
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        String existringLoggingConfig = environment.getProperty(LOGGING_CONFIG_KEY);
-        if(existringLoggingConfig != null && !existringLoggingConfig.isBlank()) {
+        String existingLoggingConfig = environment.getProperty(LOGGING_CONFIG_KEY);
+        if(existingLoggingConfig != null && !existingLoggingConfig.isBlank()) {
             // Ako aplikacija već ima definisan logging.config, ne menjamo ga
             return;
         }

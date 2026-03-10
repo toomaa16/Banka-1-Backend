@@ -134,7 +134,7 @@ public class ObservabilityAutoConfig {
         @Bean
         @ConditionalOnMissingBean(UserIdExtractor.class)
         public UserIdExtractor jwtAuthenticationUserIdExtractor() {
-            return new JwtAuthenticationUserIdExtract();
+            return new JwtAuthenticationUserIdExtractor();
         }
     }
 }

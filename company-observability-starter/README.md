@@ -129,7 +129,8 @@ Opcionalno dodavanje userId iz JWT-a u MDC uključuje se samo u servisima koji k
 ```yaml
 company:
   observability:
-    user-id-mdc-enabled: true
+    starter:
+      user-id-mdc-enabled: true
 ```
 
 Ako servis ne koristi JWT, ovu opciju nije potrebno uključivati.

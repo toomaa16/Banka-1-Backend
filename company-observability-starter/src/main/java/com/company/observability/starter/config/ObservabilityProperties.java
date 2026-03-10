@@ -2,14 +2,17 @@ package com.company.observability.starter.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-// Config svojstva za observability biblioteku
+/**
+ * Konfiguraciona svojstva za observability starter biblioteku.
+ * <p>
+ * Svojstva se ucitavaju iz konfiguracije aplikacije preko prefiksa
+ * {@code company.observability.starter}.
+ */
 @ConfigurationProperties(prefix = "company.observability.starter")
 public class ObservabilityProperties {
     private boolean enabled = true;
     private String correlationHeaderName = "X-Correlation-Id";
-    private boolean maskingEnabled = true;
-    private boolean userIdMdcEnabled = true;
-    private String loggingConfigLocation = "classpath:company-observability/logback-spring.xml";
+    private boolean userIdMdcEnabled = false;
 
     public boolean isEnabled() {
         return enabled;
@@ -27,14 +30,6 @@ public class ObservabilityProperties {
         this.correlationHeaderName = correlationHeaderName;
     }
 
-    public boolean isMaskingEnabled() {
-        return maskingEnabled;
-    }
-
-    public void setMaskingEnabled(boolean maskingEnabled) {
-        this.maskingEnabled = maskingEnabled;
-    }
-
     public boolean isUserIdMdcEnabled() {
         return userIdMdcEnabled;
     }
@@ -43,11 +38,4 @@ public class ObservabilityProperties {
         this.userIdMdcEnabled = userIdMdcEnabled;
     }
 
-    public String getLoggingConfigLocation() {
-        return loggingConfigLocation;
-    }
-
-    public void setLoggingConfigLocation(String loggingConfigLocation) {
-        this.loggingConfigLocation = loggingConfigLocation;
-    }
 }
