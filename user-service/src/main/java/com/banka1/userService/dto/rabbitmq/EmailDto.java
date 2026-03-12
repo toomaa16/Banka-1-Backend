@@ -59,7 +59,7 @@ public class EmailDto {
      * @param username  korisnicko ime ili ime za prikaz
      * @param emailType tip email notifikacije
      */
-    public EmailDto(String userEmail, String username, EmailType emailType) {
+    public EmailDto(String username, String userEmail, EmailType emailType) {
         this.userEmail = userEmail;
         this.username = username;
         this.emailType = emailType;
