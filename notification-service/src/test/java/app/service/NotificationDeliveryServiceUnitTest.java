@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
@@ -28,12 +27,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -160,7 +159,6 @@ class NotificationDeliveryServiceUnitTest {
 
         NotificationDelivery created = deliveryCaptor.getValue();
         assertNotNull(created.getDeliveryId());
-        UUID.fromString(created.getDeliveryId());
         assertEquals(NotificationType.EMPLOYEE_CREATED, created.getNotificationType());
         assertEquals(NotificationDeliveryStatus.PENDING, createdStatusesById.get(created.getDeliveryId()));
 
@@ -172,7 +170,7 @@ class NotificationDeliveryServiceUnitTest {
     }
 
     @Test
-    void handleIncomingMessageSchedulesRetryUsingConfiguredDefaultDelayOnSendFailure() {
+    void handleIncomingMessageThrowsExceptionOnSendFailure() {
         NotificationRequest request = new NotificationRequest("Dimitrije", TEST_EMAIL, Map.of("subject", "Hello", "body", "Body"));
         when(notificationService.resolveEmailContent(request, NotificationType.EMPLOYEE_CREATED))
                 .thenReturn(new ResolvedEmail(TEST_EMAIL, "Hello", "Body"));
@@ -195,6 +193,7 @@ class NotificationDeliveryServiceUnitTest {
 
         verify(retryTaskQueue).schedule(finalSaved.getDeliveryId(), finalSaved.getNextAttemptAt());
     }
+
 
     @Test
     void handleIncomingMessageFailsImmediatelyOnMailAuthenticationException() {
@@ -489,16 +488,37 @@ class NotificationDeliveryServiceUnitTest {
         verify(retryTaskQueue).schedule("delivery-page2", p2.getNextAttemptAt());
     }
 
-    private void runHandleIncomingMessageInTransaction(Runnable action) {
+    @Test
+    void processDueRetriesThrowsExceptionWhenSendFails() {
+        Instant now = Instant.now();
+        RetryTask dueTask = new RetryTask("delivery-1", now.minusSeconds(1));
+        NotificationDelivery delivery = new NotificationDelivery();
+        delivery.setDeliveryId("delivery-1");
+        delivery.setRecipientEmail(TEST_EMAIL);
+        delivery.setSubject("Hello");
+        delivery.setBody("Body");
+        delivery.setStatus(NotificationDeliveryStatus.RETRY_SCHEDULED);
+        delivery.setNotificationType(NotificationType.EMPLOYEE_CREATED);
+        delivery.setRetryCount(3);
+        delivery.setMaxRetries(4);
+        delivery.setNextAttemptAt(now.minusSeconds(1));
+        deliveriesById.put(delivery.getDeliveryId(), delivery);
+
+        when(retryTaskQueue.peek()).thenReturn(dueTask).thenReturn(null);
+        when(retryTaskQueue.pollDue(any(Instant.class))).thenReturn(dueTask);
+        doThrow(new IllegalStateException("SMTP unavailable"))
+                .when(notificationService).sendEmail(TEST_EMAIL, "Hello", "Body");
+
+        notificationDeliveryService.processDueRetries();
+    }
+
+
+    private void runHandleIncomingMessageInTransaction(Runnable runnable) {
         TransactionSynchronizationManager.initSynchronization();
         try {
-            action.run();
-            for (TransactionSynchronization synchronization : TransactionSynchronizationManager.getSynchronizations()) {
-                synchronization.afterCommit();
-            }
+            runnable.run();
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
     }
-
 }

@@ -5,6 +5,8 @@ import app.entities.NotificationType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,7 +21,22 @@ class DefaultNotificationTemplateFactoryUnitTest {
 
     @BeforeEach
     void setUp() {
-        factory = new DefaultNotificationTemplateFactory();
+        Map<String, EmailTemplate> templates = Map.of(
+                "EMPLOYEE_CREATED", new EmailTemplate(
+                        "Activation Email",
+                        "Zdravo {{name}}, vas nalog je kreiran. Aktivirajte nalog klikom na link:\n{{activationLink}}"
+                ),
+                "EMPLOYEE_PASSWORD_RESET", new EmailTemplate(
+                        "Password Reset Email",
+                        "Zdravo {{name}}, resetujte lozinku klikom na link:\n{{resetLink}}"
+                ),
+                "EMPLOYEE_ACCOUNT_DEACTIVATED", new EmailTemplate(
+                        "Account Deactivation Email",
+                        "Zdravo {{name}}, vas nalog je deaktiviran."
+                )
+        );
+
+        factory = new DefaultNotificationTemplateFactory(templates);
     }
 
     @Test

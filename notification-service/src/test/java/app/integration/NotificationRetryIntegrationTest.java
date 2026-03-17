@@ -3,7 +3,7 @@ package app.integration;
 import app.dto.NotificationRequest;
 import app.entities.NotificationDelivery;
 import app.entities.NotificationDeliveryStatus;
-import app.entities.NotificationType;
+import app.entities.RoutingKeys;
 import app.repository.NotificationDeliveryRepository;
 import app.service.NotificationDeliveryService;
 import app.service.RetryTaskQueue;
@@ -77,7 +77,7 @@ class NotificationRetryIntegrationTest {
                 Map.of("name", "Andrija", "activationLink", "https://example.com/activate/123")
         );
 
-        notificationDeliveryService.handleIncomingMessage(request, NotificationType.ROUTING_KEY_EMPLOYEE_CREATED);
+        notificationDeliveryService.handleIncomingMessage(request, RoutingKeys.EMPLOYEE_CREATED);
 
         waitForCondition(Duration.ofSeconds(5), () -> {
             List<NotificationDelivery> deliveries = notificationDeliveryRepository.findAll();
@@ -118,7 +118,7 @@ class NotificationRetryIntegrationTest {
                 Map.of("name", "Andrija", "activationLink", "https://example.com/activate/123")
         );
 
-        notificationDeliveryService.handleIncomingMessage(request, NotificationType.ROUTING_KEY_EMPLOYEE_CREATED);
+        notificationDeliveryService.handleIncomingMessage(request, RoutingKeys.EMPLOYEE_CREATED);
 
         waitForCondition(Duration.ofSeconds(5), () -> {
             List<NotificationDelivery> deliveries = notificationDeliveryRepository.findAll();

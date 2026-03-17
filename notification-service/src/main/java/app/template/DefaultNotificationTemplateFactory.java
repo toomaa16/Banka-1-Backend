@@ -2,7 +2,11 @@ package app.template;
 
 import app.dto.EmailTemplate;
 import app.entities.NotificationType;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Default mapping from event type to email subject and template.
@@ -16,25 +20,37 @@ public final class DefaultNotificationTemplateFactory implements NotificationTem
      * @return email template containing subject and body
      */
 
+    private final Map<String, EmailTemplate> templates;
+
+    public DefaultNotificationTemplateFactory(Environment environment) {
+        this.templates = loadTemplates(environment);
+    }
+
+    private Map<String, EmailTemplate> loadTemplates(Environment environment) {
+        Map<String, EmailTemplate> map = new HashMap<>();
+        // Load from properties
+        for (NotificationType type : NotificationType.values()) {
+            String prefix = "notification.templates." + type.name();
+            String subject = environment.getProperty(prefix + ".subject");
+            String body = environment.getProperty(prefix + ".body");
+            if (subject != null && body != null) {
+                map.put(type.name(), new EmailTemplate(subject, body));
+            }
+        }
+        return map;
+    }
+
     @Override
     public EmailTemplate resolve(NotificationType type) {
-        return switch (type) {
-            case EMPLOYEE_CREATED -> new EmailTemplate(
-                    "Activation Email",
-                    "Zdravo {{name}}, vas nalog je kreiran. "
-                            + "Aktivirajte nalog klikom na link:\n{{activationLink}}"
+
+        EmailTemplate template = templates.get(type.name());
+
+        if (template == null) {
+            throw new IllegalArgumentException(
+                    "No template defined for notification type: " + type
             );
-            case EMPLOYEE_PASSWORD_RESET -> new EmailTemplate(
-                    "Password Reset Email",
-                    "Zdravo {{name}}, resetujte lozinku klikom na link:\n{{resetLink}}"
-            );
-            case EMPLOYEE_ACCOUNT_DEACTIVATED -> new EmailTemplate(
-                    "Account Deactivation Email",
-                    "Zdravo {{name}}, vas nalog je deaktiviran."
-            );
-            case UNKNOWN -> throw new IllegalArgumentException(
-                    "No template is defined for notification type: " + type
-            );
-        };
+        }
+
+        return template;
     }
 }
