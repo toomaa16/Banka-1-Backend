@@ -4,6 +4,8 @@ import app.dto.EmailTemplate;
 import app.dto.NotificationRequest;
 import app.dto.ResolvedEmail;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
 import app.template.NotificationTemplateFactory;
 
 import java.util.HashMap;
@@ -143,7 +145,7 @@ final class NotificationContentResolver {
      */
     private static void requireNotificationType(NotificationType notificationType) {
         if (notificationType == null) {
-            throw new IllegalArgumentException(NOTIFICATION_TYPE_REQUIRED);
+            throw new BusinessException(ErrorCode.NOTIFICATION_TYPE_REQUIRED, NOTIFICATION_TYPE_REQUIRED);
         }
     }
 
@@ -154,10 +156,10 @@ final class NotificationContentResolver {
      */
     private static void validateRequest(NotificationRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException(NOTIFICATION_PAYLOAD_REQUIRED);
+            throw new BusinessException(ErrorCode.NOTIFICATION_PAYLOAD_REQUIRED, NOTIFICATION_PAYLOAD_REQUIRED);
         }
         if (request.getUserEmail() == null || request.getUserEmail().isBlank()) {
-            throw new IllegalArgumentException(USER_EMAIL_REQUIRED);
+            throw new BusinessException(ErrorCode.RECIPIENT_EMAIL_REQUIRED, USER_EMAIL_REQUIRED);
         }
 
     }

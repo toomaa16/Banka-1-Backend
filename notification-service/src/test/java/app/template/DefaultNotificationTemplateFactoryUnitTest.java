@@ -2,6 +2,8 @@ package app.template;
 
 import app.dto.EmailTemplate;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,11 +69,12 @@ class DefaultNotificationTemplateFactoryUnitTest {
 
     @Test
     void resolveUnknownNotificationTypeThrows() {
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
+        BusinessException ex = assertThrows(
+                BusinessException.class,
                 () -> factory.resolve(NotificationType.UNKNOWN)
         );
-        assertTrue(ex.getMessage().contains("UNKNOWN"));
+        assertEquals(ErrorCode.EMAIL_CONTENT_RESOLUTION_FAILED, ex.getErrorCode());
+        assertTrue(ex.getDetails().contains("UNKNOWN"));
     }
 
     @Test

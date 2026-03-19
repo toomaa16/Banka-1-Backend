@@ -6,6 +6,8 @@ import app.dto.RetryTask;
 import app.entities.NotificationDelivery;
 import app.entities.NotificationDeliveryStatus;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -23,7 +25,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.core.env.Environment;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,6 +54,11 @@ public class NotificationDeliveryService {
      * In-memory scheduler optimization for due retries.
      */
     private final RetryTaskQueue retryTaskQueue;
+
+    /**
+     * Configured routing keys map.
+     */
+    private final Map<String, NotificationType> routingKeysMap;
 
     /**
      * Spring environment for property access.
@@ -145,14 +151,14 @@ public class NotificationDeliveryService {
     ) {
         validateIncoming(req);
         validateNotificationType(notificationType);
-        ResolvedEmail resolvedEmail =
-                notificationService.resolveEmailContent(req, notificationType);
+        ResolvedEmail resolvedEmail = notificationService.resolveEmailContent(req, notificationType);
         String deliveryId = UUID.randomUUID().toString();
         NotificationDelivery delivery = buildPendingDelivery(
                 deliveryId, resolvedEmail, normalizeNotificationType(notificationType)
         );
         notificationDeliveryTxService.createPendingDelivery(delivery);
         runAfterCommit(() -> attemptDelivery(deliveryId));
+//        attemptDelivery(deliveryId);
     }
 
     /**
@@ -291,12 +297,27 @@ public class NotificationDeliveryService {
         if (shouldSkipAttempt(delivery, now)) {
             return;
         }
-        notificationService.sendEmail(
-                delivery.getRecipientEmail(),
-                delivery.getSubject(),
-                delivery.getBody()
-        );
-        notificationDeliveryTxService.markSucceeded(deliveryId, now);
+        delivery.setLastAttemptAt(now);
+        try {
+            notificationService.sendEmail(
+                    delivery.getRecipientEmail(),
+                    delivery.getSubject(),
+                    delivery.getBody()
+            );
+            notificationDeliveryTxService.markSucceeded(deliveryId, now);
+        } catch (MailAuthenticationException e) {
+            // Non-retryable
+            notificationDeliveryTxService.markFailedOrRetry(deliveryId, now, trimError(e), false, retryDelaySeconds);
+        } catch (Exception e) {
+            boolean retryable = isRetryable(e);
+            Instant nextAttempt = notificationDeliveryTxService.markFailedOrRetry(
+                    deliveryId, now, trimError(e), retryable, retryDelaySeconds
+            );
+
+            if (retryable && nextAttempt != null) {
+                retryTaskQueue.schedule(deliveryId, nextAttempt);
+            }
+        }
     }
 
     /**
@@ -396,45 +417,19 @@ public class NotificationDeliveryService {
         });
     }
 
-    /**
-     * Maps RabbitMQ routing keys to supported notification event types.
-     *
-     * @param routingKey routing key from AMQP message headers
-     * @return resolved event type when supported
-     */
-    private Map<String, NotificationType> routingKeys;
-
-    @PostConstruct
-    void loadRoutingKeys() {
-        routingKeys = new HashMap<>();
-        // Load from properties like notification.routing-keys.employee.created=EMPLOYEE_CREATED
-        for (NotificationType type : NotificationType.values()) {
-            String propKey = "notification.routing-keys." + type.name().toLowerCase().replace('_', '.');
-            String value = environment.getProperty(propKey);
-            if (value != null) {
-                try {
-                    NotificationType parsedType = NotificationType.valueOf(value);
-                    routingKeys.put(type.name().toLowerCase().replace('_', '.'), parsedType);
-                } catch (IllegalArgumentException e) {
-                    // ignore invalid
-                }
-            }
-        }
-    }
-
     private Optional<NotificationType> resolveNotificationType(String routingKey) {
-
-        return Optional.ofNullable(routingKeys.get(routingKey));
+        return Optional.ofNullable(routingKeysMap.get(routingKey));
     }
 
     /**
      * Validates basic incoming payload shape.
      *
      * @param request payload object from listener
+     * @throws BusinessException if request is null
      */
     private void validateIncoming(NotificationRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("Notification payload is required");
+            throw new BusinessException(ErrorCode.NOTIFICATION_PAYLOAD_REQUIRED, "Notification payload is required");
         }
     }
 
@@ -442,10 +437,11 @@ public class NotificationDeliveryService {
      * Validates required notification type resolved from routing key.
      *
      * @param notificationType resolved notification type
+     * @throws BusinessException if notificationType is null
      */
     private void validateNotificationType(NotificationType notificationType) {
         if (notificationType == null) {
-            throw new IllegalArgumentException("notificationType is required");
+            throw new BusinessException(ErrorCode.NOTIFICATION_TYPE_REQUIRED, "notificationType is required");
         }
     }
 

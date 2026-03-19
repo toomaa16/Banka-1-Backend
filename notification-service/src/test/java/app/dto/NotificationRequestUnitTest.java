@@ -12,10 +12,10 @@ class NotificationRequestUnitTest {
 
     @Test
     void constructorKeepsDefaultEmptyTemplateVariablesWhenNullIsProvided() {
-        NotificationRequest request = new NotificationRequest("Andrija", "andrija@example.com", null);
+        NotificationRequest request = new NotificationRequest("Dimitrije", "dimitrije@example.com", null);
 
-        assertEquals("Andrija", request.getUsername());
-        assertEquals("andrija@example.com", request.getUserEmail());
+        assertEquals("Dimitrije", request.getUsername());
+        assertEquals("dimitrije@example.com", request.getUserEmail());
         assertNotNull(request.getTemplateVariables());
         assertTrue(request.getTemplateVariables().isEmpty());
     }
@@ -23,8 +23,8 @@ class NotificationRequestUnitTest {
     @Test
     void constructorCopiesProvidedTemplateVariables() {
         NotificationRequest request = new NotificationRequest(
-                "Andrija",
-                "andrija@example.com",
+                "Dimitrije",
+                "dimitrije@example.com",
                 Map.of("activationLink", "https://example.com/activate/123")
         );
 

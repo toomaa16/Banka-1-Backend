@@ -4,6 +4,8 @@ import app.dto.NotificationRequest;
 import app.dto.ResolvedEmail;
 import app.dto.EmailTemplate;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
 import app.template.NotificationTemplateFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -92,20 +94,22 @@ class NotificationServiceUnitTest {
     void resolveEmailContentFailsWhenUserEmailMissing() {
         NotificationRequest request = new NotificationRequest("Dimitrije", "", Map.of("name", "Dimitrije"));
 
-        assertThrows(
-                IllegalArgumentException.class,
+        BusinessException exception = assertThrows(
+                BusinessException.class,
                 () -> notificationService.resolveEmailContent(request, NotificationType.EMPLOYEE_CREATED)
         );
+        assertEquals(ErrorCode.RECIPIENT_EMAIL_REQUIRED, exception.getErrorCode());
     }
 
     @Test
     void resolveEmailContentFailsWhenUserEmailIsNull() {
         NotificationRequest request = new NotificationRequest("Dimitrije", null, Map.of("name", "Dimitrije"));
 
-        assertThrows(
-                IllegalArgumentException.class,
+        BusinessException exception = assertThrows(
+                BusinessException.class,
                 () -> notificationService.resolveEmailContent(request, NotificationType.EMPLOYEE_CREATED)
         );
+        assertEquals(ErrorCode.RECIPIENT_EMAIL_REQUIRED, exception.getErrorCode());
     }
 
     @Test

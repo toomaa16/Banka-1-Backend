@@ -4,6 +4,8 @@ import app.dto.EmailTemplate;
 import app.dto.NotificationRequest;
 import app.dto.ResolvedEmail;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
 import app.template.NotificationTemplateFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,22 +46,25 @@ class NotificationContentResolverUnitTest {
 
     @Test
     void resolveThrowsWhenRequestIsNull() {
-        assertThrows(IllegalArgumentException.class,
+        BusinessException exception = assertThrows(BusinessException.class,
                 () -> NotificationContentResolver.resolve(null, NotificationType.EMPLOYEE_CREATED, templateFactory));
+        assertEquals(ErrorCode.NOTIFICATION_PAYLOAD_REQUIRED, exception.getErrorCode());
     }
 
     @Test
     void resolveThrowsWhenEmailIsNull() {
         NotificationRequest request = new NotificationRequest("Alice", null, Map.of());
-        assertThrows(IllegalArgumentException.class,
+        BusinessException exception = assertThrows(BusinessException.class,
                 () -> NotificationContentResolver.resolve(request, NotificationType.EMPLOYEE_CREATED, templateFactory));
+        assertEquals(ErrorCode.RECIPIENT_EMAIL_REQUIRED, exception.getErrorCode());
     }
 
     @Test
     void resolveThrowsWhenEmailIsBlank() {
         NotificationRequest request = new NotificationRequest("Alice", "   ", Map.of());
-        assertThrows(IllegalArgumentException.class,
+        BusinessException exception = assertThrows(BusinessException.class,
                 () -> NotificationContentResolver.resolve(request, NotificationType.EMPLOYEE_CREATED, templateFactory));
+        assertEquals(ErrorCode.RECIPIENT_EMAIL_REQUIRED, exception.getErrorCode());
     }
 
 
@@ -67,8 +72,9 @@ class NotificationContentResolverUnitTest {
     @Test
     void resolveThrowsWhenNotificationTypeIsNull() {
         NotificationRequest request = new NotificationRequest("Alice", "alice@example.com", Map.of());
-        assertThrows(IllegalArgumentException.class,
+        BusinessException exception = assertThrows(BusinessException.class,
                 () -> NotificationContentResolver.resolve(request, null, templateFactory));
+        assertEquals(ErrorCode.NOTIFICATION_TYPE_REQUIRED, exception.getErrorCode());
     }
 
     // --- Happy path rendering ---

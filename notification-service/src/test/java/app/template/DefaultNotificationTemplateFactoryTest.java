@@ -2,11 +2,12 @@ package app.template;
 
 import app.dto.EmailTemplate;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.Environment;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,10 +37,9 @@ class DefaultNotificationTemplateFactoryTest {
 
         DefaultNotificationTemplateFactory factory = new DefaultNotificationTemplateFactory(environment);
 
-        try {
-            factory.resolve(NotificationType.EMPLOYEE_CREATED);
-        } catch (IllegalArgumentException e) {
-            assertEquals("No template defined for notification type: EMPLOYEE_CREATED", e.getMessage());
-        }
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> factory.resolve(NotificationType.EMPLOYEE_CREATED));
+        assertEquals(ErrorCode.EMAIL_CONTENT_RESOLUTION_FAILED, exception.getErrorCode());
+        assertEquals("No template defined for notification type: EMPLOYEE_CREATED", exception.getDetails());
     }
 }

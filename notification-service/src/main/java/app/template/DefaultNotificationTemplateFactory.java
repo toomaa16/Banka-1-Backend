@@ -2,6 +2,9 @@ package app.template;
 
 import app.dto.EmailTemplate;
 import app.entities.NotificationType;
+import app.exception.BusinessException;
+import app.exception.ErrorCode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +25,7 @@ public final class DefaultNotificationTemplateFactory implements NotificationTem
 
     private final Map<String, EmailTemplate> templates;
 
+    @Autowired
     public DefaultNotificationTemplateFactory(Environment environment) {
         this.templates = loadTemplates(environment);
     }
@@ -49,9 +53,7 @@ public final class DefaultNotificationTemplateFactory implements NotificationTem
         EmailTemplate template = templates.get(type.name());
 
         if (template == null) {
-            throw new IllegalArgumentException(
-                    "No template defined for notification type: " + type
-            );
+            throw new BusinessException(ErrorCode.EMAIL_CONTENT_RESOLUTION_FAILED, "No template defined for notification type: " + type);
         }
 
         return template;

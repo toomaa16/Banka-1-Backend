@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,14 +15,18 @@ import java.util.Map;
 public class NotificationConfig {
 
     @Bean
-    @ConfigurationProperties(prefix = "notification.templates")
-    public Map<String, EmailTemplate> emailTemplates() {
-        return new HashMap<>();
+    @ConfigurationProperties(prefix = "notification")
+    public NotificationProperties notificationProperties() {
+        return new NotificationProperties();
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "notification.routing-keys")
-    public Map<String, NotificationType> routingKeys() {
-        return new HashMap<>();
+    public Map<String, EmailTemplate> emailTemplates(NotificationProperties properties) {
+        return properties.getTemplates();
+    }
+
+    @Bean
+    public Map<String, NotificationType> routingKeys(NotificationProperties properties) {
+        return properties.getRoutingKeys();
     }
 }

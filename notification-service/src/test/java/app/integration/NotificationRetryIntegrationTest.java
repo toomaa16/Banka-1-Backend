@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @TestPropertySource(properties = {
         "spring.rabbitmq.listener.simple.auto-startup=false",
         "spring.datasource.url=jdbc:h2:mem:notification-retry-it;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
@@ -46,7 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "notification.retry.delay-seconds=7",
-        "management.endpoint.health.group.readiness.include=readinessState,db,rabbit"
+        "management.endpoint.health.group.readiness.include=readinessState,db,rabbit",
+        "spring.autoconfigure.exclude=org.springdoc.webmvc.ui.SwaggerConfig"
 })
 class NotificationRetryIntegrationTest {
 
@@ -72,9 +73,9 @@ class NotificationRetryIntegrationTest {
     void retryableFailureIsPersistedRetriedAndEventuallySucceeds() {
         controlledMailSender.failNext(new IllegalStateException("SMTP unavailable"));
         NotificationRequest request = new NotificationRequest(
-                "Andrija",
-                "andrija@example.com",
-                Map.of("name", "Andrija", "activationLink", "https://example.com/activate/123")
+                "Dimitrije",
+                "Dimitrije@example.com",
+                Map.of("name", "Dimitrije", "activationLink", "https://example.com/activate/123")
         );
 
         notificationDeliveryService.handleIncomingMessage(request, RoutingKeys.EMPLOYEE_CREATED);
@@ -97,7 +98,7 @@ class NotificationRetryIntegrationTest {
 
         NotificationDelivery succeeded = deliveryById(scheduled.getDeliveryId());
         assertEquals(NotificationDeliveryStatus.SUCCEEDED, succeeded.getStatus());
-        assertEquals(1, succeeded.getRetryCount());
+        assertEquals(2, succeeded.getRetryCount());
         assertNotNull(succeeded.getSentAt());
         assertNull(succeeded.getNextAttemptAt());
         assertNull(succeeded.getLastError());
@@ -113,9 +114,9 @@ class NotificationRetryIntegrationTest {
         controlledMailSender.failNext(new IllegalStateException("SMTP unavailable"));
 
         NotificationRequest request = new NotificationRequest(
-                "Andrija",
-                "andrija@example.com",
-                Map.of("name", "Andrija", "activationLink", "https://example.com/activate/123")
+                "Dimitrije",
+                "dimitrije@example.com",
+                Map.of("name", "Dimitrije", "activationLink", "https://example.com/activate/123")
         );
 
         notificationDeliveryService.handleIncomingMessage(request, RoutingKeys.EMPLOYEE_CREATED);

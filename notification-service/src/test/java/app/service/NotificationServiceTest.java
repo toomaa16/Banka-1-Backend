@@ -1,5 +1,6 @@
 package app.service;
 
+import app.dto.EmailTemplate;
 import app.dto.NotificationRequest;
 import app.dto.ResolvedEmail;
 import app.entities.NotificationType;
@@ -14,9 +15,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link NotificationService}.
@@ -45,10 +46,13 @@ class NotificationServiceTest {
     @Test
     void resolveEmailContentDelegatesToResolver() {
         NotificationRequest request = new NotificationRequest("name", "email", Map.of());
+        EmailTemplate template = new EmailTemplate("Subject", "Body");
+        when(templateFactory.resolve(NotificationType.EMPLOYEE_CREATED)).thenReturn(template);
 
         ResolvedEmail result = notificationService.resolveEmailContent(request, NotificationType.EMPLOYEE_CREATED);
 
-        // Since it's delegated, and templateFactory is mocked, it should work
-        // In real test, mock the resolver or something, but since it's static, hard to test
+        assertEquals("email", result.recipientEmail());
+        assertEquals("Subject", result.subject());
+        assertEquals("Body", result.body());
     }
 }
